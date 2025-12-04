@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TestMessage CRUD</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>TestMessage CRUD</h1>
+
+    <!-- Form لإضافة أو تعديل -->
+    <form id="messageForm">
+      <input type="hidden" id="messageId">
+      <input type="text" id="name" placeholder="Name" required>
+      <input type="text" id="nationalId" placeholder="National ID" required>
+      <textarea id="content" placeholder="Content" required></textarea>
+      <textarea id="notes" placeholder="Notes"></textarea>
+      <button type="submit">Save</button>
+      <button type="button" id="resetBtn">Reset</button>
+    </form>
+
+    <hr>
+
+    <!-- جدول عرض البيانات -->
+    <table id="messageTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>National ID</th>
+          <th>Content</th>
+          <th>Notes</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be added here dynamically -->
+      </tbody>
+    </table>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
