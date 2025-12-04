@@ -1,19 +1,63 @@
-const API_BASE = "http://localhost:5500/api/Test"; // عدل على حسب السيرفر بتاعك
+const API_BASE = "https://test-crud-backend-three.vercel.app/api/Test";
 
 const messageForm = document.getElementById("messageForm");
 const messageTableBody = document.querySelector("#messageTable tbody");
 const resetBtn = document.getElementById("resetBtn");
+const searchInput = document.getElementById("searchInput");
 
-// Load all messages
-const loadMessages = async () => {
-  const res = await fetch(`${API_BASE}/getAll`);
-  const data = await res.json();
-  console.log("data : ",data);
-  
-  renderTable(data.data || []);
+const mobileContainer = document.createElement("div");
+mobileContainer.id = "mobileCardsWrapper";
+document.querySelector(".table-wrapper").after(mobileContainer);
+
+let allMessages = [];
+
+/* ===============================
+   Helpers
+================================*/
+const showAlert = (text, type = "error") => {
+  const alertBox = document.createElement("div");
+  alertBox.className = `alert ${type}`;
+  alertBox.textContent = text;
+  document.body.appendChild(alertBox);
+  setTimeout(() => alertBox.remove(), 2500);
 };
 
-// Render table rows
+const showLoader = () => {
+  const loader = document.createElement("div");
+  loader.className = "loader-overlay";
+  loader.innerHTML = `<div class="spinner"></div>`;
+  document.body.appendChild(loader);
+};
+
+const hideLoader = () => {
+  const loader = document.querySelector(".loader-overlay");
+  if (loader) loader.remove();
+};
+
+/* ===============================
+   Load Messages
+================================*/
+const loadMessages = async () => {
+  try {
+    showLoader();
+    const res = await fetch(`${API_BASE}/getAll`);
+    const json = await res.json();
+
+    if (!res.ok) throw new Error(json.err || "Failed to fetch data");
+
+    allMessages = json.data || [];
+    renderTable(allMessages);
+    renderMobileCards(allMessages);
+  } catch (err) {
+    showAlert(err.message, "error");
+  } finally {
+    hideLoader();
+  }
+};
+
+/* ===============================
+   Render Table
+================================*/
 const renderTable = (messages) => {
   messageTableBody.innerHTML = "";
   messages.forEach(msg => {
@@ -32,9 +76,34 @@ const renderTable = (messages) => {
   });
 };
 
-// Handle form submit (create or update)
+/* ===============================
+   Render Mobile Cards
+================================*/
+const renderMobileCards = (messages) => {
+  mobileContainer.innerHTML = "";
+  messages.forEach(msg => {
+    const card = document.createElement("div");
+    card.className = "mobile-card";
+    card.innerHTML = `
+      <p><strong>Name:</strong> ${msg.name}</p>
+      <p><strong>National ID:</strong> ${msg.nationalId}</p>
+      <p><strong>Content:</strong> ${msg.content}</p>
+      <p><strong>Notes:</strong> ${msg.notes || ""}</p>
+      <div class="mobile-actions">
+        <button class="edit-btn" data-id="${msg._id}">Edit</button>
+        <button class="delete-btn" data-id="${msg._id}">Delete</button>
+      </div>
+    `;
+    mobileContainer.appendChild(card);
+  });
+};
+
+/* ===============================
+   Form Submit (Create/Update)
+================================*/
 messageForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const id = document.getElementById("messageId").value;
   const payload = {
     name: document.getElementById("name").value,
@@ -43,53 +112,101 @@ messageForm.addEventListener("submit", async (e) => {
     notes: document.getElementById("notes").value
   };
 
-  if (id) {
-    // Update
-    await fetch(`${API_BASE}/update/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-  } else {
-    // Create
-    await fetch(`${API_BASE}/create`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-  }
+  try {
+    showLoader();
+    const endpoint = id ? `${API_BASE}/update/${id}` : `${API_BASE}/create`;
+    const method = id ? "PATCH" : "POST";
 
-  messageForm.reset();
-  document.getElementById("messageId").value = "";
-  loadMessages();
+    const res = await fetch(endpoint, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.err || "Failed to save");
+
+    showAlert("Saved Successfully!", "success");
+    messageForm.reset();
+    document.getElementById("messageId").value = "";
+    loadMessages();
+  } catch (err) {
+    showAlert(err.message, "error");
+  } finally {
+    hideLoader();
+  }
 });
 
-// Handle edit & delete buttons
-messageTableBody.addEventListener("click", async (e) => {
+/* ===============================
+   Edit & Delete
+================================*/
+document.body.addEventListener("click", async (e) => {
   const id = e.target.dataset.id;
   if (!id) return;
 
   if (e.target.classList.contains("edit-btn")) {
-    const res = await fetch(`${API_BASE}/getOne/${id}`);
-    const msg = (await res.json()).data;
-    document.getElementById("messageId").value = msg._id;
-    document.getElementById("name").value = msg.name;
-    document.getElementById("nationalId").value = msg.nationalId;
-    document.getElementById("content").value = msg.content;
-    document.getElementById("notes").value = msg.notes;
-  } else if (e.target.classList.contains("delete-btn")) {
-    if (confirm("Are you sure you want to delete this record?")) {
-      await fetch(`${API_BASE}/deleteDocument/${id}`, { method: "DELETE" });
+    try {
+      showLoader();
+      const res = await fetch(`${API_BASE}/getOne/${id}`);
+      const msg = (await res.json()).data;
+      if (!msg) throw new Error("Failed to load item");
+
+      document.getElementById("messageId").value = msg._id;
+      document.getElementById("name").value = msg.name;
+      document.getElementById("nationalId").value = msg.nationalId;
+      document.getElementById("content").value = msg.content;
+      document.getElementById("notes").value = msg.notes;
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      showAlert(err.message, "error");
+    } finally {
+      hideLoader();
+    }
+  }
+
+  if (e.target.classList.contains("delete-btn")) {
+    if (!confirm("Are you sure you want to delete this record?")) return;
+
+    try {
+      showLoader();
+      const res = await fetch(`${API_BASE}/deleteDocument/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.err || "Delete failed");
+      showAlert("Deleted Successfully!", "success");
       loadMessages();
+    } catch (err) {
+      showAlert(err.message, "error");
+    } finally {
+      hideLoader();
     }
   }
 });
 
-// Reset form
+/* ===============================
+   Reset Form
+================================*/
 resetBtn.addEventListener("click", () => {
   messageForm.reset();
   document.getElementById("messageId").value = "";
 });
 
-// Initial load
+/* ===============================
+   Live Search
+================================*/
+searchInput.addEventListener("input", () => {
+  const keyword = searchInput.value.toLowerCase();
+  const filtered = allMessages.filter(msg =>
+    msg.name.toLowerCase().includes(keyword) ||
+    msg.nationalId.toLowerCase().includes(keyword) ||
+    msg.content.toLowerCase().includes(keyword) ||
+    (msg.notes || "").toLowerCase().includes(keyword)
+  );
+  renderTable(filtered);
+  renderMobileCards(filtered);
+});
+
+/* ===============================
+   Initial Load
+================================*/
 loadMessages();
