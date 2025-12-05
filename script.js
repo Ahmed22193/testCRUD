@@ -1,5 +1,5 @@
-// const API_BASE = "https://test-crud-backend-three.vercel.app/api/Test";
-const API_BASE = "http://localhost:5500/api/Test";
+const API_BASE = "https://test-crud-backend-three.vercel.app/api/Test";
+// const API_BASE = "http://localhost:5500/api/Test";
 
 const messageForm = document.getElementById("messageForm");
 const messageTableBody = document.querySelector("#messageTable tbody");
