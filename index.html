@@ -1,57 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TestMessage CRUD</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div class="container">
-    <h1>TestMessage CRUD</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Excel Records CRUD</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Excel Records CRUD</h1>
 
-    <!-- Form -->
-    <form id="messageForm" class="card">
-      <input type="hidden" id="messageId" />
+      <!-- Form -->
+      <form id="messageForm" class="card">
+        <input type="hidden" id="messageId" />
 
-      <div class="grid">
-        <input type="text" id="name" placeholder="Name" required />
-        <input type="text" id="nationalId" placeholder="National ID" required />
+        <div class="grid">
+          <input type="text" id="landLocation" placeholder="مكان الأرض" required />
+          <input type="text" id="committee" placeholder="اللجنة" required />
+          <input type="text" id="center" placeholder="المركز" required />
+          <input type="text" id="unit" placeholder="الوحدة" required />
+          <input type="number" id="area" placeholder="المساحة" required />
+          <input type="text" id="type" placeholder="النوع" required />
+          <input type="date" id="requestDate" placeholder="تاريخ الطلب" required />
+          <input type="text" id="requestNumber" placeholder="رقم الطلب" required />
+          <input type="text" id="requestedFor" placeholder="الطلب لصالح" required />
+          <input type="text" id="phone" placeholder="التليفون" required />
+          <input type="text" id="applicantName" placeholder="مقدم الطلب" required />
+          <input type="text" id="nationalId" placeholder="الرقم القومي" required />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="save-btn">Save</button>
+          <button type="button" id="resetBtn" class="reset-btn">Reset</button>
+        </div>
+      </form>
+
+      <!-- Search Box -->
+      <div class="search-wrapper">
+        <input type="text" id="searchInput" placeholder="Search..." />
       </div>
 
-      <textarea id="content" placeholder="Content" required></textarea>
-      <textarea id="notes" placeholder="Notes"></textarea>
-
-      <div class="form-actions">
-        <button type="submit" class="save-btn">Save</button>
-        <button type="button" id="resetBtn" class="reset-btn">Reset</button>
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table id="messageTable">
+          <thead>
+            <tr>
+              <th>مكان الأرض</th>
+              <th>اللجنة</th>
+              <th>المركز</th>
+              <th>الوحدة</th>
+              <th>المساحة</th>
+              <th>النوع</th>
+              <th>تاريخ الطلب</th>
+              <th>رقم الطلب</th>
+              <th>الطلب لصالح</th>
+              <th>التليفون</th>
+              <th>مقدم الطلب</th>
+              <th>الرقم القومي</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
-    </form>
 
-    <!-- Search Box -->
-    <div class="search-wrapper">
-      <input type="text" id="searchInput" placeholder="Search..." />
+      <!-- Mobile Cards wrapper (injected by JS) -->
     </div>
 
-    <!-- Table -->
-    <div class="table-wrapper">
-      <table id="messageTable">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>National ID</th>
-            <th>Content</th>
-            <th>Notes</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <!-- Mobile Cards wrapper (injected by JS) -->
-  </div>
-
-  <script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
