@@ -3,14 +3,17 @@ const API_BASE = "https://test-crud-backend-three.vercel.app/api/Test";
 
 const messageForm = document.getElementById("messageForm");
 const messageTableBody = document.querySelector("#messageTable tbody");
+const tableHead = document.querySelector("#messageTable thead tr");
 const resetBtn = document.getElementById("resetBtn");
 const searchInput = document.getElementById("searchInput");
+const formInputsContainer = document.getElementById("formInputs");
 
 const mobileContainer = document.createElement("div");
 mobileContainer.id = "mobileCardsWrapper";
 document.querySelector(".table-wrapper").after(mobileContainer);
 
 let allMessages = [];
+let allColumns = [];
 
 /* ===============================
    Helpers
@@ -36,51 +39,54 @@ const hideLoader = () => {
 };
 
 /* ===============================
-   Load Messages
+   Render Table Headers
 ================================*/
-const loadMessages = async () => {
-  try {
-    showLoader();
-    const res = await fetch(`${API_BASE}/getAll`);
-    const json = await res.json();
-
-    if (!res.ok) throw new Error(json.err || "Failed to fetch data");
-
-    allMessages = json.data || [];
-    renderTable(allMessages);
-    renderMobileCards(allMessages);
-  } catch (err) {
-    showAlert(err.message, "error");
-  } finally {
-    hideLoader();
-  }
+const renderTableHeaders = (columns) => {
+  tableHead.innerHTML = "";
+  columns.forEach(col => {
+    const th = document.createElement("th");
+    th.textContent = col;
+    tableHead.appendChild(th);
+  });
+  const actionTh = document.createElement("th");
+  actionTh.textContent = "Actions";
+  tableHead.appendChild(actionTh);
 };
 
 /* ===============================
-   Render Table
+   Render Form Inputs
+================================*/
+const renderFormInputs = (columns) => {
+  formInputsContainer.innerHTML = "";
+  columns.forEach(col => {
+    const input = document.createElement("input");
+    input.type = col.toLowerCase().includes("date") ? "date" : "text";
+    input.id = col;
+    input.placeholder = col;
+    formInputsContainer.appendChild(input);
+  });
+};
+
+/* ===============================
+   Render Table Rows
 ================================*/
 const renderTable = (messages) => {
   messageTableBody.innerHTML = "";
-  messages.forEach((msg) => {
+  messages.forEach(msg => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${msg.landLocation || ""}</td>
-      <td>${msg.committee || ""}</td>
-      <td>${msg.center || ""}</td>
-      <td>${msg.unit || ""}</td>
-      <td>${msg.area || ""}</td>
-      <td>${msg.type || ""}</td>
-      <td>${msg.requestDate ? new Date(msg.requestDate).toLocaleDateString() : ""}</td>
-      <td>${msg.requestNumber || ""}</td>
-      <td>${msg.requestedFor || ""}</td>
-      <td>${msg.phone || ""}</td>
-      <td>${msg.applicantName || ""}</td>
-      <td>${msg.nationalId || ""}</td>
-      <td>
-        <button class="edit-btn" data-id="${msg._id}">Edit</button>
-        <button class="delete-btn" data-id="${msg._id}">Delete</button>
-      </td>
+    allColumns.forEach(col => {
+      const td = document.createElement("td");
+      let val = msg[col] ?? "";
+      if (val && !isNaN(Date.parse(val))) val = new Date(val).toLocaleDateString();
+      td.textContent = val;
+      tr.appendChild(td);
+    });
+    const actionTd = document.createElement("td");
+    actionTd.innerHTML = `
+      <button class="edit-btn" data-id="${msg._id}">Edit</button>
+      <button class="delete-btn" data-id="${msg._id}">Delete</button>
     `;
+    tr.appendChild(actionTd);
     messageTableBody.appendChild(tr);
   });
 };
@@ -90,22 +96,15 @@ const renderTable = (messages) => {
 ================================*/
 const renderMobileCards = (messages) => {
   mobileContainer.innerHTML = "";
-  messages.forEach((msg) => {
+  messages.forEach(msg => {
     const card = document.createElement("div");
     card.className = "mobile-card";
-    card.innerHTML = `
-      <p><strong>مكان الأرض:</strong> ${msg.landLocation || ""}</p>
-      <p><strong>اللجنة:</strong> ${msg.committee || ""}</p>
-      <p><strong>المركز:</strong> ${msg.center || ""}</p>
-      <p><strong>الوحدة:</strong> ${msg.unit || ""}</p>
-      <p><strong>المساحة:</strong> ${msg.area || ""}</p>
-      <p><strong>النوع:</strong> ${msg.type || ""}</p>
-      <p><strong>تاريخ الطلب:</strong> ${msg.requestDate ? new Date(msg.requestDate).toLocaleDateString() : ""}</p>
-      <p><strong>رقم الطلب:</strong> ${msg.requestNumber || ""}</p>
-      <p><strong>الطلب لصالح:</strong> ${msg.requestedFor || ""}</p>
-      <p><strong>التليفون:</strong> ${msg.phone || ""}</p>
-      <p><strong>مقدم الطلب:</strong> ${msg.applicantName || ""}</p>
-      <p><strong>الرقم القومي:</strong> ${msg.nationalId || ""}</p>
+    card.innerHTML = allColumns.map(col => {
+      let val = msg[col] ?? "";
+      if (val && !isNaN(Date.parse(val))) val = new Date(val).toLocaleDateString();
+      return `<p><strong>${col}:</strong> ${val}</p>`;
+    }).join("");
+    card.innerHTML += `
       <div class="mobile-actions">
         <button class="edit-btn" data-id="${msg._id}">Edit</button>
         <button class="delete-btn" data-id="${msg._id}">Delete</button>
@@ -116,50 +115,50 @@ const renderMobileCards = (messages) => {
 };
 
 /* ===============================
-   Form Submit (Create/Update)
+   Load Messages
 ================================*/
-messageForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const id = document.getElementById("messageId").value;
-  const payload = {
-    landLocation: document.getElementById("landLocation").value,
-    committee: document.getElementById("committee").value,
-    center: document.getElementById("center").value,
-    unit: document.getElementById("unit").value,
-    area: Number(document.getElementById("area").value),
-    type: document.getElementById("type").value,
-    requestDate: document.getElementById("requestDate").value,
-    requestNumber: document.getElementById("requestNumber").value,
-    requestedFor: document.getElementById("requestedFor").value,
-    phone: document.getElementById("phone").value,
-    applicantName: document.getElementById("applicantName").value,
-    nationalId: document.getElementById("nationalId").value,
-  };
-
+const loadMessages = async () => {
   try {
     showLoader();
-    const endpoint = id ? `${API_BASE}/update/${id}` : `${API_BASE}/create`;
-    const method = id ? "PATCH" : "POST";
+    const res = await fetch(`${API_BASE}/getAll`);
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.err || "Failed to fetch data");
 
-    const res = await fetch(endpoint, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    allMessages = json.data || [];
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.err || "Failed to save");
+    if (allMessages.length) {
+      allColumns = Object.keys(allMessages[0]).filter(k => k !== "_id" && k !== "__v");
+      renderTableHeaders(allColumns);
+      renderFormInputs(allColumns);
+    }
 
-    showAlert("Saved Successfully!", "success");
-    messageForm.reset();
-    document.getElementById("messageId").value = "";
-    loadMessages();
+    renderTable(allMessages);
+    renderMobileCards(allMessages);
   } catch (err) {
     showAlert(err.message, "error");
   } finally {
     hideLoader();
   }
+};
+
+/* ===============================
+   Live Search
+================================*/
+searchInput.addEventListener("input", () => {
+  const keyword = searchInput.value.toLowerCase();
+  const filtered = allMessages.filter(msg =>
+    allColumns.some(col => (msg[col] ?? "").toString().toLowerCase().includes(keyword))
+  );
+  renderTable(filtered);
+  renderMobileCards(filtered);
+});
+
+/* ===============================
+   Reset Form
+================================*/
+resetBtn.addEventListener("click", () => {
+  messageForm.reset();
+  document.getElementById("messageId").value = "";
 });
 
 /* ===============================
@@ -176,20 +175,14 @@ document.body.addEventListener("click", async (e) => {
       const msg = (await res.json()).data;
       if (!msg) throw new Error("Failed to load item");
 
+      Object.keys(msg).forEach(key => {
+        const input = document.getElementById(key);
+        if (input) {
+          if (key.toLowerCase().includes("date") && msg[key]) input.value = msg[key].slice(0, 10);
+          else input.value = msg[key] ?? "";
+        }
+      });
       document.getElementById("messageId").value = msg._id;
-      document.getElementById("landLocation").value = msg.landLocation || "";
-      document.getElementById("committee").value = msg.committee || "";
-      document.getElementById("center").value = msg.center || "";
-      document.getElementById("unit").value = msg.unit || "";
-      document.getElementById("area").value = msg.area || "";
-      document.getElementById("type").value = msg.type || "";
-      document.getElementById("requestDate").value = msg.requestDate ? msg.requestDate.slice(0, 10) : "";
-      document.getElementById("requestNumber").value = msg.requestNumber || "";
-      document.getElementById("requestedFor").value = msg.requestedFor || "";
-      document.getElementById("phone").value = msg.phone || "";
-      document.getElementById("applicantName").value = msg.applicantName || "";
-      document.getElementById("nationalId").value = msg.nationalId || "";
-
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       showAlert(err.message, "error");
@@ -203,9 +196,7 @@ document.body.addEventListener("click", async (e) => {
 
     try {
       showLoader();
-      const res = await fetch(`${API_BASE}/deleteDocument/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API_BASE}/deleteDocument/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.err || "Delete failed");
       showAlert("Deleted Successfully!", "success");
@@ -219,34 +210,98 @@ document.body.addEventListener("click", async (e) => {
 });
 
 /* ===============================
-   Reset Form
+   Form Submit (Create/Update)
 ================================*/
-resetBtn.addEventListener("click", () => {
-  messageForm.reset();
-  document.getElementById("messageId").value = "";
+messageForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const id = document.getElementById("messageId").value;
+
+  const payload = {};
+  allColumns.forEach(col => {
+    const input = document.getElementById(col);
+    if (input) payload[col] = input.value;
+  });
+
+  try {
+    showLoader();
+    const endpoint = id ? `${API_BASE}/update/${id}` : `${API_BASE}/create`;
+    const method = id ? "PATCH" : "POST";
+    const res = await fetch(endpoint, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.err || "Failed to save");
+    showAlert("Saved Successfully!", "success");
+    messageForm.reset();
+    document.getElementById("messageId").value = "";
+    loadMessages();
+  } catch (err) {
+    showAlert(err.message, "error");
+  } finally {
+    hideLoader();
+  }
 });
 
-/* ===============================
-   Live Search
-================================*/
-searchInput.addEventListener("input", () => {
-  const keyword = searchInput.value.toLowerCase();
-  const filtered = allMessages.filter((msg) =>
-    (msg.landLocation || "").toLowerCase().includes(keyword) ||
-    (msg.committee || "").toLowerCase().includes(keyword) ||
-    (msg.center || "").toLowerCase().includes(keyword) ||
-    (msg.unit || "").toLowerCase().includes(keyword) ||
-    (msg.area !== undefined ? msg.area.toString() : "").includes(keyword) ||
-    (msg.type || "").toLowerCase().includes(keyword) ||
-    (msg.requestNumber || "").toLowerCase().includes(keyword) ||
-    (msg.requestedFor || "").toLowerCase().includes(keyword) ||
-    (msg.phone || "").toLowerCase().includes(keyword) ||
-    (msg.applicantName || "").toLowerCase().includes(keyword) ||
-    (msg.nationalId || "").toLowerCase().includes(keyword)
-  );
-  renderTable(filtered);
-  renderMobileCards(filtered);
+
+
+const uploadExcelBtn = document.getElementById("uploadExcelBtn");
+const excelFileInput = document.getElementById("excelFile");
+const clearAllBtn = document.getElementById("clearAllBtn");
+
+// ===== رفع ملف Excel =====
+uploadExcelBtn.addEventListener("click", async () => {
+  const file = excelFileInput.files[0];
+  if (!file) return showAlert("Please select a file first", "error");
+
+  const formData = new FormData();
+  formData.append("xlsx", file);
+
+  try {
+    showLoader();
+    const res = await fetch(`${API_BASE}/upload-excel`, {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.err || "Failed to upload file");
+
+    showAlert(`Uploaded ${data.inserted} rows successfully!`, "success");
+    excelFileInput.value = ""; // مسح اختيار الملف
+    loadMessages(); // إعادة تحميل البيانات
+  } catch (err) {
+    showAlert(err.message, "error");
+  } finally {
+    hideLoader();
+  }
 });
+
+// ===== مسح كل البيانات =====
+clearAllBtn.addEventListener("click", async () => {
+  if (!confirm("Are you sure you want to delete all data?")) return;
+
+  try {
+    showLoader();
+    const res = await fetch(`${API_BASE}/deleteAll`, { method: "DELETE" });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.err || "Failed to delete all data");
+
+    showAlert("All data deleted successfully!", "success");
+    loadMessages(); // إعادة تحميل البيانات
+  } catch (err) {
+    showAlert(err.message, "error");
+  } finally {
+    hideLoader();
+  }
+});
+
+
+
+
+
 
 /* ===============================
    Initial Load

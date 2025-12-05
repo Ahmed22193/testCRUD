@@ -10,30 +10,25 @@
     <div class="container">
       <h1>Excel Records CRUD</h1>
 
-      <!-- Form -->
+      <!-- Form (inputs will be generated dynamically) -->
       <form id="messageForm" class="card">
         <input type="hidden" id="messageId" />
-
-        <div class="grid">
-          <input type="text" id="landLocation" placeholder="مكان الأرض" required />
-          <input type="text" id="committee" placeholder="اللجنة" required />
-          <input type="text" id="center" placeholder="المركز" required />
-          <input type="text" id="unit" placeholder="الوحدة" required />
-          <input type="number" id="area" placeholder="المساحة" required />
-          <input type="text" id="type" placeholder="النوع" required />
-          <input type="date" id="requestDate" placeholder="تاريخ الطلب" required />
-          <input type="text" id="requestNumber" placeholder="رقم الطلب" required />
-          <input type="text" id="requestedFor" placeholder="الطلب لصالح" required />
-          <input type="text" id="phone" placeholder="التليفون" required />
-          <input type="text" id="applicantName" placeholder="مقدم الطلب" required />
-          <input type="text" id="nationalId" placeholder="الرقم القومي" required />
-        </div>
-
+        <div class="grid" id="formInputs"></div>
         <div class="form-actions">
           <button type="submit" class="save-btn">Save</button>
           <button type="button" id="resetBtn" class="reset-btn">Reset</button>
         </div>
       </form>
+      <!-- تحت الفورم مباشرة -->
+      <div class="form-actions" style="margin-top: 10px">
+        <input type="file" id="excelFile" accept=".xls,.xlsx" />
+        <button type="button" id="uploadExcelBtn" class="save-btn">
+          Upload Excel
+        </button>
+        <button type="button" id="clearAllBtn" class="reset-btn">
+          Clear All Data
+        </button>
+      </div>
 
       <!-- Search Box -->
       <div class="search-wrapper">
@@ -44,27 +39,11 @@
       <div class="table-wrapper">
         <table id="messageTable">
           <thead>
-            <tr>
-              <th>مكان الأرض</th>
-              <th>اللجنة</th>
-              <th>المركز</th>
-              <th>الوحدة</th>
-              <th>المساحة</th>
-              <th>النوع</th>
-              <th>تاريخ الطلب</th>
-              <th>رقم الطلب</th>
-              <th>الطلب لصالح</th>
-              <th>التليفون</th>
-              <th>مقدم الطلب</th>
-              <th>الرقم القومي</th>
-              <th>Actions</th>
-            </tr>
+            <tr></tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
-
-      <!-- Mobile Cards wrapper (injected by JS) -->
     </div>
 
     <script src="script.js"></script>
